@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Luyện HSK2 — Chữ Hán &amp; Phiên Âm (Pinyin)</title>
+  <style>
+    :root{--bg:#f6f7fb;--card:#ffffff;--accent:#6c5ce7;--muted:#6b7280}
+    body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial; background:var(--bg); margin:0; color:#111}
+    .wrap{max-width:980px;margin:36px auto;padding:20px}
+    header{display:flex;gap:16px;align-items:center}
+    h1{margin:0;font-size:1.5rem}
+    p.lead{margin:6px 0 20px;color:var(--muted)}
+    .card{background:var(--card);border-radius:12px;padding:18px;box-shadow:0 6px 18px rgba(15,23,42,0.06)}
+    .controls{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+    button{background:var(--accent);color:white;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
+    button.secondary{background:#e6e9ff;color:#111}
+    .question{padding:12px;border-radius:10px;margin-bottom:10px;border:1px solid #eef2ff}
+    .pinyin{font-size:1.15rem;font-weight:600;color:var(--accent)}
+    .choices{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+    label.choice{display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;border:1px solid #eef2ff;cursor:pointer}
+    input[type=radio]{width:18px;height:18px}
+    .meta{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+    .result{margin-top:14px;padding:12px;border-radius:8px;background:#f3f6ff;color:#0b1226}
+    .correct{background:#ecfdf5;color:#064e3b}
+    .wrong{background:#fff1f2;color:#5f021f}
+    footer{margin-top:18px;text-align:center;color:var(--muted);font-size:0.9rem}
+    @media (max-width:640px){.wrap{padding:12px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="24" height="24" rx="6" fill="#6c5ce7"/><path d="M7 8h10M7 12h10M7 16h6" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/></svg>
+      </div>
+      <div>
+        <h1>Luyện chữ Hán HSK2 — Trắc nghiệm kèm phiên âm (Pinyin)</h1>
+        <p class="lead">Trang luyện tập dành cho học viên HSK2: đọc phiên âm (pinyin) và chọn chữ Hán đúng. Có đáp án, giải thích và chấm điểm.</p>
+      </div>
+    </header>
+
+    <div class="card" id="app">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+        <div>
+          <strong>Bài kiểm: </strong><span id="total">12</span> câu — <span id="level">HSK2</span>
+        </div>
+        <div class="controls">
+          <button id="checkBtn">Nộp bài &amp; Xem điểm</button>
+          <button id="showAnswers" class="secondary">Hiện/Ẩn đáp án</button>
+          <button id="resetBtn" class="secondary">Làm lại</button>
+        </div>
+      </div>
+
+      <hr style="margin:12px 0 18px;border:none;border-top:1px solid #f1f3ff" />
+
+      <form id="quizForm">
+        <!-- questions inserted here -->
+      </form>
+
+      <div id="feedback"></div>
+
+      <div class="meta">
+        <div>Đúng: <strong id="score">0</strong>/<span id="outOf">12</span></div>
+        <div><small style="color:var(--muted)">Mẹo: Nhấp "Hiện/Ẩn đáp án" để xem từ vựng tiếng Việt và phiên âm.</small></div>
+      </div>
+    </div>
+
+    <footer>
+      <small>Phiên bản demo — Tùy chỉnh thêm được. Bạn có thể sao chép mã và thêm bài tập mới.</small>
+    </footer>
+  </div>
+
+  <script>
+    // Dữ liệu bài tập HSK2: hiển thị pinyin, người học chọn chữ Hán đúng.
+    const exercises = [
+      {pinyin: 'ài', meaning: 'yêu, thích', choices: ['爱','矮','碍','爱心'], answer: 0},
+      {pinyin: 'huì', meaning: 'có thể, biết (làm gì)', choices: ['会','会儿','汇','回'], answer: 0},
+      {pinyin: 'shuì jiào', meaning: 'ngủ', choices: ['睡觉','睡觉儿','睡着','睡眠'], answer: 0},
+      {pinyin: 'fāngbiàn', meaning: 'thuận tiện', choices: ['方便','方法','方向','房间'], answer: 0},
+      {pinyin: 'bāngzhù', meaning: 'giúp đỡ', choices: ['帮助','帮忙','帮手','包助'], answer: 0},
+      {pinyin: 'gōnggòng qìchē', meaning: 'xe buýt', choices: ['公共汽车','公共机车','公司汽车','公交车'], answer: 0},
+      {pinyin: 'yīyuàn', meaning: 'bệnh viện', choices: ['医院','医务','醫院','衣院'], answer: 0},
+      {pinyin: 'jīchǎng', meaning: 'sân bay', choices: ['机场','机会','鸡场','机票'], answer: 0},
+      {pinyin: 'bǐjiào', meaning: 'khá, tương đối', choices: ['比较','比例','毕竟','比赛'], answer: 0},
+      {pinyin: 'zháojí', meaning: 'lo lắng, sốt ruột', choices: ['着急','着记','找急','着机'], answer: 0},
+      {pinyin: 'yǐjīng', meaning: 'đã (already)', choices: ['已经','以静','以经','已将'], answer: 0},
+      {pinyin: 'xīwàng', meaning: 'hy vọng', choices: ['希望','习望','希望儿','希望'], answer: 0}
+    ];
+
+    const form = document.getElementById('quizForm');
+    const totalEl = document.getElementById('total');
+    const outOf = document.getElementById('outOf');
+    totalEl.textContent = exercises.length;
+    outOf.textContent = exercises.length;
+
+    // render questions
+    function render() {
+      form.innerHTML = '';
+      exercises.forEach((ex, idx) => {
+        const q = document.createElement('div');
+        q.className = 'question';
+        q.setAttribute('data-index', idx);
+        q.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="font-size:0.95rem;color:var(--muted)">Câu ${idx+1}</div>
+              <div class="pinyin">${ex.pinyin}</div>
+            </div>
+            <div style="text-align:right;color:var(--muted);font-size:0.95rem">(Chọn 1 đáp án)</div>
+          </div>
+          <div class="choices">
+            ${ex.choices.map((c, i) => `
+              <label class="choice"><input type="radio" name="q${idx}" value="${i}"><span style="font-size:1.2rem">${c}</span></label>
+            `).join('')}
+          </div>
+          <div class="answer" style="display:none;margin-top:8px;padding:10px;border-radius:8px;background:#f8fafc;color:#111">
+            <strong>Đáp án:</strong> <span class="ansChar">${ex.choices[ex.answer]}</span>
+            <div style="margin-top:6px">Phiên âm: <strong>${ex.pinyin}</strong> — Nghĩa: <em>${ex.meaning}</em></div>
+          </div>
+        `;
+        form.appendChild(q);
+      });
+    }
+
+    render();
+
+    // Actions
+    document.getElementById('showAnswers').addEventListener('click', () => {
+      document.querySelectorAll('.answer').forEach(a => {
+        a.style.display = a.style.display === 'none' ? 'block' : 'none';
+      });
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      form.reset();
+      document.getElementById('feedback').innerHTML = '';
+      updateScore(0);
+      document.querySelectorAll('.question').forEach(q => {
+        q.classList.remove('correct','wrong');
+      });
+    });
+
+    document.getElementById('checkBtn').addEventListener('click', (e) => {
+      e.preventDefault();
+      let correctCount = 0;
+      const feedback = [];
+      exercises.forEach((ex, idx) => {
+        const chosen = form[`q${idx}`].value;
+        const qEl = document.querySelector(`.question[data-index='${idx}']`);
+        const ansEl = qEl.querySelector('.answer');
+        ansEl.style.display = 'block';
+        if (chosen === String(ex.answer)) {
+          correctCount++;
+          qEl.classList.remove('wrong');
+          qEl.classList.add('correct');
+        } else {
+          qEl.classList.remove('correct');
+          qEl.classList.add('wrong');
+        }
+        feedback.push({idx: idx+1, chosen: chosen === '' ? null : ex.choices[chosen], correct: ex.choices[ex.answer], pinyin: ex.pinyin, meaning: ex.meaning});
+      });
+
+      showResult(correctCount, feedback);
+      updateScore(correctCount);
+      window.scrollTo({top:0,behavior:'smooth'});
+    });
+
+    function updateScore(n){
+      document.getElementById('score').textContent = n;
+    }
+
+    function showResult(score, feedback){
+      const fb = document.getElementById('feedback');
+      const percent = Math.round(score / exercises.length * 100);
+      fb.innerHTML = `
+        <div class="result ${score===exercises.length ? 'correct' : score>=Math.ceil(exercises.length*0.7) ? 'correct' : 'wrong'}">
+          <strong>Kết quả: ${score}/${exercises.length}</strong> — ${percent}%<br>
+          ${score===exercises.length ? 'Xuất sắc! Bạn trả lời đúng tất cả.' : score>=Math.ceil(exercises.length*0.7) ? 'Tốt — tiếp tục rèn luyện!' : 'Cần cố gắng hơn, học lại các từ sai.'}
+        </div>
+      `;
+
+      // chi tiết từng câu (ngắn gọn)
+      const detail = document.createElement('div');
+      detail.style.marginTop = '12px';
+      detail.innerHTML = '<strong>Chi tiết từng câu:</strong>' + feedback.map(f => {
+        return `<div style="margin-top:8px;padding:10px;border-radius:8px;background:#fff;border:1px solid #f1f3ff">
+          <div><strong>Câu ${f.idx}</strong> — Pinyin: <em>${f.pinyin}</em> — Nghĩa: <em>${f.meaning}</em></div>
+          <div style="margin-top:6px">Đáp án đúng: <strong>${f.correct}</strong> — Bạn chọn: <strong>${f.chosen ? f.chosen : '<span style=color:#9ca3af>Không chọn</span>'}</strong></div>
+        </div>`;
+      }).join('');
+
+      fb.appendChild(detail);
+    }
+
+    // keyboard: press Enter on radio to move next question
+    form.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const active = document.activeElement;
+        if (active && active.type === 'radio') {
+          // find next radio in form
+          const radios = Array.from(form.querySelectorAll('input[type=radio]'));
+          const idx = radios.indexOf(active);
+          if (idx >= 0 && idx < radios.length - 1) radios[idx+1].focus();
+        }
+      }
+    });
+
+  </script>
+</body>
+</html>
